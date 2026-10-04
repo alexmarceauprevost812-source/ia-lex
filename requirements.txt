@@ -1,0 +1,1 @@
+# IA-LEX V1 utilise uniquement la bibliothèque standard Python.

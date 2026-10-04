@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+memory.json
+memory.json.*
+data/
+.pytest_cache/
