@@ -1,67 +1,138 @@
-# IA-LEX Personal V1
+# IA-LEX Personal V2
 
-Assistant personnel en Python pour Kali Linux et Ubuntu. Fonctionne hors ligne,
-sans clé API, sans service externe et sans dépendance à installer.
-La V1 utilise un moteur à règles simples : ce n’est pas encore un modèle de langage.
+Assistant Python pour Kali/Ubuntu : conversation avec Ollama local, détection des
+outils installés, propositions de commandes, exécution après confirmation et
+création de scripts Python. Sans clé API et sans bibliothèque Python externe.
+Python 3.8+ et Linux requis.
 
-## Lancement
-
-Python 3.8 ou plus récent est requis. Si Python manque :
-
-```bash
-sudo apt update
-sudo apt install python3
-```
+## Installer et lancer
 
 ```bash
-git clone https://github.com/alexmarceauprevost812-source/ti-lex-ia-.git
-cd ti-lex-ia-
-git switch main
-python3 main.py
+git clone -b main https://github.com/alexmarceauprevost812-source/ia-lex.git
+cd ia-lex
+python3 install.py
+export PATH="$HOME/.local/bin:$PATH"
+bonjour ia-lex
 ```
 
-## Commandes
+Tu peux aussi lancer `ia-lex`, `./ia-lex` dans le dépôt, ou `python3 main.py`.
+L'installation copie l'application dans `~/.local/share/ia-lex/app` et crée deux
+raccourcis dans `~/.local/bin`, sans sudo. Elle peut être relancée pour mettre à
+jour la copie après `git pull`. Elle refuse de remplacer un autre outil déjà nommé
+`bonjour` ou `ia-lex`. La mémoire est conservée lors des mises à jour.
+Pour conserver le PATH, ajoute `export PATH="$HOME/.local/bin:$PATH"` à
+`~/.zshrc` sur Kali ou `~/.bashrc` sur Ubuntu, puis ouvre un nouveau terminal.
+
+## Ajouter l'IA locale Ollama
+
+Installe Ollama avec les instructions officielles : https://ollama.com/download/linux
+Puis, dans un terminal :
+
+```bash
+ollama serve
+```
+
+Si Ollama tourne déjà comme service, inutile de relancer le serveur.
+Dans un autre terminal, télécharge un modèle local puis lance IA-LEX :
+
+```bash
+ollama pull qwen2.5:7b
+bonjour ia-lex
+```
+
+Le téléchargement exige une connexion ; l'utilisation du modèle local fonctionne
+ensuite hors ligne. La vitesse et la mémoire requise dépendent du modèle et du PC.
+Pour utiliser un autre modèle déjà téléchargé :
+
+```bash
+IA_LEX_MODEL=qwen2.5:3b ia-lex
+```
+
+L'API utilise `http://127.0.0.1:11434/api/chat` avec un schéma JSON, selon
+https://docs.ollama.com/api/chat et https://docs.ollama.com/capabilities/structured-outputs.
+`IA_LEX_OLLAMA_URL` permet de changer le port local ; seuls les hôtes de boucle
+locale HTTP sont acceptés. Aucun envoi direct vers une API distante.
+Sans Ollama, les commandes locales restent disponibles et un message explique
+comment lancer le serveur lors d'une demande de conversation.
+
+## Utilisation
+
+```text
+TOI > quels outils réseau sont installés ?
+TOI > /tools nmap
+TOI > explique mes interfaces réseau et propose une commande
+IA-LEX > ... proposition et explication ...
+TOI > /run
+Exécuter /usr/sbin/ip addr ? Écris OUI : OUI
+IA-LEX > ... résultat puis explication par Ollama ...
+```
+
+L'exemple est indicatif : les réponses dépendent du modèle. IA-LEX repère les
+exécutables du PATH, y compris les outils Kali présents. Il n'installe pas tous les
+outils Kali et ne garantit pas de connaître toutes leurs options. Demande des
+précisions quand une proposition ne correspond pas à ton objectif.
 
 | Commande | Action |
 | --- | --- |
-| `/help` | Afficher l’aide |
-| `/memory` | Afficher les échanges enregistrés |
-| `/system` | Afficher le système, l’architecture et Python |
-| `/clear` | Effacer l’écran, conserver la mémoire |
-| `/quit` | Quitter proprement |
+| `/help` | Aide |
+| `/memory` | Historique persistant |
+| `/system` | Système, Python et dossier de travail |
+| `/tools [filtre]` | Inventaire des programmes installés |
+| `/plan` | Commandes en attente et explications |
+| `/run` | Exécuter une étape après confirmation exacte `OUI` |
+| `/cancel` | Annuler le plan |
+| `/cd chemin` | Changer le dossier ; annuler l'ancien plan |
+| `/script chemin.py` | Exporter le plan vers un nouveau script |
+| `/clear` | Effacer l'écran, conserver la mémoire |
+| `/quit` | Quitter ; Ctrl+C et Ctrl+D fonctionnent aussi |
 
-Ctrl+C et Ctrl+D quittent également. Essaie `bonjour`, `qui es-tu ?`, puis
-`tu te souviens de mon dernier message ?`. Les commandes ne sont pas enregistrées.
+Après chaque résultat, l'utilisateur peut demander une explication ou corriger le
+plan. Après la dernière étape réussie, Ollama analyse automatiquement le résultat
+et peut proposer la suite ; toute nouvelle exécution exige encore `/run` et `OUI`.
+Une erreur ou interruption arrête le plan. Une nouvelle demande remplace le plan.
 
-## Mémoire et confidentialité
+## Automatiser un plan
 
-Les 200 derniers messages (100 échanges) sont stockés en JSON dans
-`~/.local/share/ia-lex/memory.json`, avec écriture atomique et permissions privées
-du fichier (600 sous Linux). La mémoire est en clair, sans chiffrement.
-Pour la supprimer, quitte le programme puis supprime ce fichier.
-Un fichier invalide est conservé et bloque le lancement pour éviter sa perte.
-Pour choisir un autre emplacement :
+Demande par exemple : « prépare un plan pour inventorier mon système ».
+Consulte `/plan`, puis `/script inventaire.py` pour créer un script Python autonome.
+Lance-le avec `python3 inventaire.py`. Chaque commande exige encore `OUI` ; le
+script s'arrête si une commande échoue. Un fichier existant n'est jamais écrasé.
+
+Les commandes s'exécutent dans le dossier affiché, avec tes droits actuels, sans
+shell implicite : `|`, `>`, `&&` et les variables ne sont pas interprétés.
+Les programmes interactifs et les demandes de mot de passe ne sont pas pris en
+charge (entrée standard fermée). Pour `sudo`, utilise ton terminal directement.
+Chaque processus est limité à 60 secondes et 16 000 octets de sortie ; atteindre
+une limite arrête le groupe de processus. Les programmes peuvent modifier tes
+fichiers ou ton réseau : lis la commande exacte avant de confirmer. Ce n'est pas
+un bac à sable. Utilise les outils de sécurité sur tes systèmes ou ceux autorisés.
+Il n'y a pas de mode d'exécution automatique sans confirmation.
+
+## Mémoire et apparence
+
+200 derniers messages stockés en clair dans `~/.local/share/ia-lex/memory.json`,
+avec écriture atomique et permissions 600. Les sorties exécutées sont enregistrées
+et transmises au modèle Ollama configuré pour les analyser. Les 20 derniers
+messages, tronqués à 12 000 caractères chacun, fournissent le contexte au modèle.
+Ne fournis pas de mots de passe. Un fichier JSON invalide bloque le lancement et
+reste intact. Quitte l'application puis supprime le fichier pour oublier l'historique.
+`IA_LEX_MEMORY_PATH` change l'emplacement. Le plan en attente n'est pas restauré.
+
+Vert lime et orange sur le fond du terminal ; choisis un fond noir dans ton terminal.
+`NO_COLOR=1` désactive les couleurs. Elles sont aussi désactivées hors terminal.
+Les confirmations d'exécution sont refusées lorsque l'entrée est redirigée.
+
+## Architecture et vérification
+
+- `main.py` : conversation, commandes et confirmations.
+- `brain.py` : client Ollama et validation stricte des propositions.
+- `runner.py` : inventaire, processus bornés et scripts.
+- `memory.py` : mémoire JSON ; `tools.py` : affichage ; `config.py` : paramètres.
+- `install.py`, `ia-lex`, `bonjour` : installation et lancement simple.
 
 ```bash
-IA_LEX_MEMORY_PATH=/tmp/ia-lex-demo.json python3 main.py
+python3 -m unittest discover -s tests -v
 ```
 
-## Apparence
-
-Vert lime pour IA-LEX, orange pour le prompt utilisateur, sur le fond du terminal.
-Choisis un fond noir dans ton terminal. Les couleurs sont désactivées quand la
-sortie est redirigée, avec `TERM=dumb`, ou avec `NO_COLOR=1`.
-
-## Architecture et extension Ollama
-
-- `main.py` : boucle terminal et commandes.
-- `brain.py` : contrat `Brain.reply(text, history)` et moteur local.
-- `memory.py` : historique JSON persistant.
-- `tools.py` : affichage et informations système.
-- `config.py` : nom, version, chemin de mémoire et limite d’historique.
-
-Pour une future intégration Ollama, implémente un moteur avec le même contrat
-`reply`, puis remplace `LocalBrain()` dans `main.py`. L’historique est transmis
-avant l’enregistrement du nouvel échange. Prévoir les délais, les erreurs de
-connexion et le modèle choisi. Aucun appel Ollama n’est effectué dans cette V1.
-IA-LEX n’exécute aucune commande shell issue des messages.
+Les tests simulent l'API Ollama, vérifient les confirmations, la mémoire, les limites,
+les scripts et l'installation. Ils ne téléchargent pas de modèle Ollama.
