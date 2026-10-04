@@ -1,4 +1,4 @@
-# IA-LEX Personal V2.3
+# IA-LEX Personal V2.4
 
 Assistant Python pour Kali/Ubuntu : conversation avec Ollama local, détection des
 outils installés, propositions de commandes, exécution après confirmation et
@@ -201,3 +201,17 @@ validés seulement après réception complète ; une interruption ne crée aucun
 La vitesse réelle de génération dépend du modèle, du CPU/GPU et de la RAM. Pour
 un modèle plus léger, télécharge `ollama pull qwen2.5:3b`, puis lance
 `IA_LEX_MODEL=qwen2.5:3b bonjour ia-lex`.
+
+## V2.4 : voir et lancer les outils du terminal
+
+- `/tools` affiche tous les exécutables trouvés dans ton PATH, sans liste Kali figée.
+- `/tools python` filtre les noms ; `/which python3` affiche le chemin exact.
+- `/exec python3 --version` prépare ta commande sans Ollama. Utilise ensuite
+  `/run` et écris `OUI` pour l'exécuter. Chaque nouvelle commande exige cette validation.
+
+Les guillemets sont pris en charge, par exemple `/exec ls "Mon dossier"`. Il n'y a
+pas de shell implicite : pipes, redirections et variables restent littéraux. Les
+outils interactifs, graphiques et ceux qui demandent un mot de passe ne sont pas
+pris en charge par l'exécution capturée. Les limites de temps et de sortie restent
+actives. Les logiciels hors du PATH ne figurent pas dans `/tools` ; un chemin
+explicite peut être utilisé avec `/exec`. La commande remplace le plan en attente.

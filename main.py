@@ -2,6 +2,7 @@
 import json
 import os
 import shlex
+import shutil
 import sys
 
 from brain import OllamaBrain
@@ -17,6 +18,8 @@ HELP = """/help             : afficher cette aide
 /memory           : afficher les échanges enregistrés
 /system           : afficher les informations système
 /tools [filtre]   : détecter les programmes du PATH
+/which outil      : voir le chemin exact du programme
+/exec commande    : préparer une commande, puis /run pour valider
 /diagnostic       : proposer les vérifications PC et réseau
 /guide outil      : expliquer un outil et proposer son manuel
 /project list     : lister les projets sauvegardés
@@ -122,6 +125,22 @@ def main():
                 selected = [tool for tool in inventory if argument.casefold() in tool.casefold()]
                 say('\n'.join(selected) or 'Aucun programme trouvé.')
                 say(f'{len(selected)} programme(s). Inventaire du PATH, pas seulement Kali.')
+            elif command == '/which':
+                names = shlex.split(argument)
+                if len(names) != 1:
+                    raise ValueError('/which exige un nom de programme.')
+                executable = shutil.which(names[0])
+                say(executable or 'Programme absent du PATH.')
+            elif command == '/exec':
+                argv = shlex.split(argument)
+                if not argv:
+                    raise ValueError('/exec exige un programme et ses arguments éventuels.')
+                exact = resolve_command(argv)
+                goal = 'Commande choisie : ' + command_text(exact)
+                completed = []
+                edits = []
+                pending = [{'argv': exact, 'explanation': 'Commande saisie par toi ; vérifie ses arguments avant de valider.'}]
+                show_plan()
             elif command == '/diagnostic':
                 edits = []
                 goal = 'Diagnostic du PC et du réseau local'
