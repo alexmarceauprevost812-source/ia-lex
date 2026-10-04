@@ -81,7 +81,7 @@ class V2Tests(unittest.TestCase):
                 {'answer': 'Teste', 'commands': [{'argv': [sys.executable, '-c', 'print("RESULT_OK")'], 'explanation': 'Test local'}]},
                 {'answer': 'Résultat compris', 'commands': []},
             ]
-            with patch.object(main, 'MEMORY_PATH', memory_path), patch.object(main, 'OllamaBrain', return_value=fake), patch.object(main, 'confirm', side_effect=[False, True]), patch('builtins.input', side_effect=['bonjour', '/run', '/plan', '/run', '/quit']), contextlib.redirect_stdout(io.StringIO()) as output:
+            with patch.object(main, 'MEMORY_PATH', memory_path), patch.object(main, 'OllamaBrain', return_value=fake), patch.object(main, 'confirm', side_effect=[False, True]), patch('builtins.input', side_effect=['bonjour', '/run', '/plan', '/run', 'analyse le résultat', '/quit']), contextlib.redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(main.main(), 0)
             self.assertIn('Exécution annulée', output.getvalue())
             self.assertIn('RESULT_OK', output.getvalue())
@@ -124,7 +124,7 @@ class V2Tests(unittest.TestCase):
             env = dict(os.environ, IA_LEX_MEMORY_PATH=str(Path(temp)/'history.json'))
             result = subprocess.run([str(Path(temp)/'.local/bin/bonjour'), 'ia-lex'], input='/help\n/tools python\n/quit\n', text=True, capture_output=True, env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('PERSONAL V2.0', result.stdout)
+            self.assertIn('PERSONAL V2.1', result.stdout)
             self.assertIn('/run', result.stdout)
             (Path(temp)/'.local/bin/bonjour').unlink()
             (Path(temp)/'.local/bin/bonjour').write_text('existing tool')

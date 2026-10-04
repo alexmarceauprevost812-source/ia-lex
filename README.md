@@ -1,4 +1,4 @@
-# IA-LEX Personal V2
+# IA-LEX Personal V2.1
 
 Assistant Python pour Kali/Ubuntu : conversation avec Ollama local, détection des
 outils installés, propositions de commandes, exécution après confirmation et
@@ -87,8 +87,8 @@ précisions quand une proposition ne correspond pas à ton objectif.
 | `/quit` | Quitter ; Ctrl+C et Ctrl+D fonctionnent aussi |
 
 Après chaque résultat, l'utilisateur peut demander une explication ou corriger le
-plan. Après la dernière étape réussie, Ollama analyse automatiquement le résultat
-et peut proposer la suite ; toute nouvelle exécution exige encore `/run` et `OUI`.
+plan. Après la dernière étape, demande une analyse à Ollama pour obtenir une suite ;
+toute nouvelle exécution exige encore `/run` et `OUI`.
 Une erreur ou interruption arrête le plan. Une nouvelle demande remplace le plan.
 
 ## Automatiser un plan
@@ -136,3 +136,26 @@ python3 -m unittest discover -s tests -v
 
 Les tests simulent l'API Ollama, vérifient les confirmations, la mémoire, les limites,
 les scripts et l'installation. Ils ne téléchargent pas de modèle Ollama.
+
+## Terminal V2.1 : diagnostic, guide et projets
+
+Le bandeau affiche **IA-L** en orange foncé et **EX** en blanc. Tout reste dans le
+terminal, y compris les explications, résultats et validations.
+
+- `/diagnostic` prépare un plan : système, disque, RAM, interfaces et services en
+  échec, selon les programmes présents. Il ne lance aucun contrôle : utilise
+  `/run` puis `OUI` pour chaque commande.
+- `/guide nmap` explique l'outil et propose de lire son manuel installé, toujours
+  après validation. Un petit catalogue décrit les outils courants ; les autres
+  programmes du PATH utilisent leur manuel. Sans `man`, demande à Ollama.
+- `/plan` affiche l'objectif, les étapes restantes et les codes de résultat.
+- `/project save mon-pc` sauvegarde le dossier, l'objectif, les commandes restantes,
+  les résultats et l'historique. Réutiliser le nom remplace cette sauvegarde.
+- `/project list` liste les sauvegardes ; `/project load mon-pc` reprend une tâche
+  sans exécuter de commande. Relis le plan car l'état du PC peut avoir changé.
+
+Les projets sont des JSON privés, en clair, dans un dossier `projects` voisin du
+fichier de mémoire. Ils contiennent aussi les sorties dans l'historique. La reprise
+remplace le contexte de conversation en cours ; sauvegarde ton projet avant d'en
+charger un autre. Les sauvegardes sont manuelles. Un changement de dossier avec
+`/cd` annule les commandes en attente.

@@ -11,7 +11,7 @@ def colors_enabled():
 def style(text, color="lime"):
     if not colors_enabled():
         return text
-    code = "38;5;208" if color == "orange" else "38;5;118"
+    code = {"orange": "38;2;196;81;19", "white": "37", "lime": "38;5;118"}[color]
     return f"\033[{code}m{text}\033[0m"
 
 
@@ -33,3 +33,7 @@ def clear_screen():
 
 def system_info():
     return f"Système : {platform.system()} {platform.release()}\nArchitecture : {platform.machine()}\nPython : {platform.python_version()}"
+
+
+def banner(version):
+    return style("IA-L", "orange") + style("EX", "white") + f" • PERSONAL V{version} • TERMINAL"
