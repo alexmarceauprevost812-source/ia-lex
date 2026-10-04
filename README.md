@@ -215,3 +215,7 @@ outils interactifs, graphiques et ceux qui demandent un mot de passe ne sont pas
 pris en charge par l'exécution capturée. Les limites de temps et de sortie restent
 actives. Les logiciels hors du PATH ne figurent pas dans `/tools` ; un chemin
 explicite peut être utilisé avec `/exec`. La commande remplace le plan en attente.
+
+Les commandes proposées et celles affichées avant validation utilisent le vert
+lime pour le programme, l'orange foncé pour les options (`--version`, `-h`) et le
+blanc pour les autres arguments. `NO_COLOR=1` conserve un affichage sans couleurs.

@@ -1,6 +1,7 @@
 """Affichage terminal et informations système, sans exécution de commandes."""
 import os
 import platform
+import shlex
 import sys
 
 
@@ -37,3 +38,12 @@ def system_info():
 
 def banner(version):
     return style("IA-L", "orange") + style("EX", "white") + f" • PERSONAL V{version} • TERMINAL"
+
+
+def show_command(argv, label="Commande"):
+    """Colorise seulement les arguments assainis, sans interpréter leur contenu."""
+    segments = []
+    for index, argument in enumerate(argv):
+        color = 'lime' if index == 0 else ('orange' if argument.startswith('-') else 'white')
+        segments.append(style(safe_text(shlex.quote(argument)), color))
+    print(style('IA-LEX > ') + safe_text(label) + ' : ' + ' '.join(segments))

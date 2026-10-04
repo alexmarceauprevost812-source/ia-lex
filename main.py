@@ -9,7 +9,7 @@ from brain import OllamaBrain
 from config import APP_NAME, MEMORY_PATH, VERSION
 from memory import Memory
 from runner import installed_tools, command_text, resolve_command, confirm, run_command, export_script
-from tools import clear_screen, say, style, system_info, banner
+from tools import clear_screen, say, style, system_info, banner, show_command
 import codework
 from projects import Projects
 from assistant_tools import diagnostic_plan, tool_guide
@@ -97,7 +97,8 @@ def main():
         if not pending:
             say("Aucune commande en attente.")
         for index, step in enumerate(pending, 1):
-            say(f"{index}. {command_text(step['argv'])}\n   {step['explanation']}")
+            show_command(step["argv"], f"Étape {index}")
+            say(step["explanation"])
         if pending:
             say("/run pour la prochaine étape, /script pour exporter, /cancel pour annuler.")
 
@@ -230,7 +231,9 @@ def main():
                     continue
                 step = pending[0]
                 argv = resolve_command(step['argv'])
-                say(f"Dossier : {os.getcwd()}\nCommande exacte : {command_text(argv)}\n{step['explanation']}")
+                say(f"Dossier : {os.getcwd()}")
+                show_command(argv, "Commande exacte à valider")
+                say(step["explanation"])
                 if not confirm(argv):
                     say('Exécution annulée. Le plan reste disponible.')
                     continue
