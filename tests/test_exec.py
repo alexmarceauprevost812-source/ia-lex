@@ -13,10 +13,11 @@ class ExecTests(unittest.TestCase):
     def test_manual_command_confirmation_and_no_ollama(self):
         with tempfile.TemporaryDirectory() as temp:
             fake = Mock(model='test')
+            fake.reply.return_value = {'answer': 'Commande terminée', 'commands': []}
             with patch.object(main, 'MEMORY_PATH', Path(temp)/'memory.json'), patch.object(main, 'OllamaBrain', return_value=fake), patch.object(main, 'confirm', side_effect=[False, True]) as confirmation, patch('builtins.input', side_effect=[f'/exec {sys.executable} --version', '/which python3', '/run', '/run', '/quit']), contextlib.redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(main.main(), 0)
             self.assertEqual(confirmation.call_count, 2)
-            fake.reply.assert_not_called()
+            self.assertEqual(fake.reply.call_count, 1)
             self.assertIn('Exécution annulée', output.getvalue())
             self.assertIn('Python', output.getvalue())
 

@@ -1,5 +1,6 @@
 """Plans de diagnostic et guide local : aucune exécution automatique."""
 import shutil
+import os
 
 GUIDE = {
     'nmap': 'Inventaire réseau et ports sur les machines autorisées.',
@@ -18,6 +19,14 @@ GUIDE = {
 
 
 def diagnostic_plan():
+    if os.name == 'nt':
+        executable = shutil.which('powershell.exe') or shutil.which('pwsh')
+        checks = [
+            'Get-CimInstance Win32_OperatingSystem | Select-Object Caption,Version,FreePhysicalMemory,TotalVisibleMemorySize',
+            'Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free',
+            'Get-NetIPConfiguration',
+        ]
+        return [{'argv': [executable, '-NoProfile', '-NonInteractive', '-Command', command], 'explanation': 'Lire les informations système Windows.'} for command in checks] if executable else []
     checks = [
         (['uname', '-a'], 'Identifier le système et le noyau.'),
         (['df', '-h', '.'], 'Afficher l’espace disque du dossier actuel.'),

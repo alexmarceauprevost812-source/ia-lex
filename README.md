@@ -1,9 +1,9 @@
-# IA-LEX Personal V2.4
+# IA-LEX Personal V2.5
 
-Assistant Python pour Kali/Ubuntu : conversation avec Ollama local, détection des
+Assistant Python pour Windows, Kali et Ubuntu : conversation avec Ollama local, détection des
 outils installés, propositions de commandes, exécution après confirmation et
 création de scripts Python. Sans clé API et sans bibliothèque Python externe.
-Python 3.8+ et Linux requis.
+Python 3.8+ requis. Windows 10/11, Kali et Ubuntu pris en charge.
 
 ## Installer et lancer
 
@@ -219,3 +219,50 @@ explicite peut être utilisé avec `/exec`. La commande remplace le plan en atte
 Les commandes proposées et celles affichées avant validation utilisent le vert
 lime pour le programme, l'orange foncé pour les options (`--version`, `-h`) et le
 blanc pour les autres arguments. `NO_COLOR=1` conserve un affichage sans couleurs.
+
+## V2.5 : assistance aux commandes étape par étape
+
+Décris ton objectif, par exemple `/aide trouver les gros fichiers de ce dossier`.
+IA-LEX propose une seule commande à la fois, explique ce qu'elle fait et attend
+`/run` puis `OUI`. Après l'exécution, Ollama analyse le résultat et propose la suite
+si nécessaire. Une erreur arrête l'ancien plan et déclenche une proposition de
+correction. Aucune étape suivante n'est exécutée automatiquement. Le dossier
+actuel et l'objectif sont fournis au modèle pour adapter les propositions.
+Sans serveur Ollama, la commande exécutée et son résultat restent enregistrés,
+mais l'analyse automatique affiche une erreur de connexion.
+
+## Installation Windows 10/11
+
+Installe Python depuis https://www.python.org/downloads/windows/ et Ollama depuis
+https://ollama.com/download/windows. Utilise Windows Terminal ou PowerShell.
+Télécharge le dépôt (Git ou ZIP), ouvre son dossier et lance :
+
+```powershell
+py install.py
+```
+
+L'installation affiche la ligne PowerShell exacte à copier pour ajouter les
+raccourcis au PATH du terminal. Exécute cette ligne, puis :
+
+```powershell
+ollama pull qwen2.5:7b
+bonjour ia-lex
+```
+
+L'application est copiée dans `%LOCALAPPDATA%/IA-LEX/app` et la mémoire se trouve
+à `%LOCALAPPDATA%/IA-LEX/memory.json`. Les fichiers `.cmd` permettent `ia-lex` et
+`bonjour ia-lex`, sans droits administrateur. Pour garder ces commandes dans les
+futurs terminaux, ajoute le dossier app indiqué au PATH utilisateur Windows.
+
+`/tools` liste les exécutables disponibles dans le PATH Windows ; les commandes
+internes de CMD comme `dir` n'y figurent pas. Exemple : `/exec cmd /c dir`, puis
+`/run` et `OUI`. `/diagnostic` prépare des lectures via PowerShell. Les programmes
+Kali ne sont pas installés sous Windows automatiquement : pour Kali, utilise son
+terminal dans WSL et l'installation Linux. IA-LEX communique au modèle le système
+réel pour adapter les commandes. Les chemins Windows et les guillemets sont
+analysés selon les règles Windows. Les droits privés 600 documentés pour les
+sauvegardes concernent Linux ; sous Windows, les droits dépendent de ton compte.
+
+Les tests Windows de cette version vérifient les fichiers d'installation et les
+plans PowerShell par simulation. Le lancement réel sous Windows reste à vérifier
+sur un PC Windows ; les tests d'exécution ont été réalisés sous Linux.

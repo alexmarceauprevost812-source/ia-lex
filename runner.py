@@ -1,6 +1,7 @@
 """Exécution bornée, sans shell implicite, après confirmation explicite."""
 import os
-import selectors
+import queue
+import threading
 import shlex
 import shutil
 import signal
@@ -24,7 +25,30 @@ def installed_tools():
 
 
 def command_text(argv):
-    return shlex.join(argv)
+    return subprocess.list2cmdline(argv) if os.name == 'nt' else shlex.join(argv)
+
+
+def split_input(text):
+    if os.name != 'nt':
+        return shlex.split(text)
+    if not text.strip():
+        return []
+    import ctypes
+    from ctypes import wintypes
+    parser = ctypes.windll.shell32.CommandLineToArgvW
+    parser.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_int)]
+    parser.restype = ctypes.POINTER(wintypes.LPWSTR)
+    count = ctypes.c_int()
+    pointer = parser('ia-lex ' + text, ctypes.byref(count))
+    if not pointer:
+        raise ValueError('Arguments Windows invalides.')
+    try:
+        return [pointer[index] for index in range(1, count.value)]
+    finally:
+        free = ctypes.windll.kernel32.LocalFree
+        free.argtypes = [ctypes.c_void_p]
+        free.restype = ctypes.c_void_p
+        free(pointer)
 
 
 def resolve_command(argv):
@@ -46,47 +70,81 @@ def confirm(argv, ask=input):
 
 def run_command(argv, timeout=COMMAND_TIMEOUT, limit=OUTPUT_LIMIT):
     """L'appelant doit obtenir une confirmation avant cet appel."""
+    windows = os.name == 'nt'
+    options = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP} if windows else {'start_new_session': True}
     process = subprocess.Popen(resolve_command(argv), stdin=subprocess.DEVNULL,
-                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                               start_new_session=True)
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **options)
     chunks = bytearray()
     reason = ''
-    selector = selectors.DefaultSelector()
-    selector.register(process.stdout, selectors.EVENT_READ)
+    output = queue.Queue(maxsize=8)
+    stop = threading.Event()
+
+    def send(block):
+        while not stop.is_set():
+            try:
+                output.put(block, timeout=.1)
+                return
+            except queue.Full:
+                pass
+
+    def reader():
+        try:
+            while not stop.is_set():
+                block = os.read(process.stdout.fileno(), 4096)
+                if not block:
+                    break
+                send(block)
+        except OSError:
+            pass
+        finally:
+            send(None)
+
+    thread = threading.Thread(target=reader, daemon=True)
+    thread.start()
     deadline = time.monotonic() + timeout
     try:
-        while selector.get_map():
+        while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 reason = 'Délai dépassé'
                 break
-            for key, _ in selector.select(min(remaining, 0.1)):
-                block = os.read(key.fileobj.fileno(), 4096)
-                if not block:
-                    selector.unregister(key.fileobj)
-                    continue
-                chunks.extend(block[:max(0, limit - len(chunks))])
-                if len(chunks) >= limit:
-                    reason = 'Limite de sortie atteinte'
-                    break
-            if reason:
+            try:
+                block = output.get(timeout=min(remaining, .1))
+            except queue.Empty:
+                continue
+            if block is None:
+                break
+            chunks.extend(block[:max(0, limit - len(chunks))])
+            if len(chunks) >= limit:
+                reason = 'Limite de sortie atteinte'
                 break
         if not reason:
             try:
-                process.wait(timeout=max(0.01, deadline - time.monotonic()))
+                process.wait(timeout=max(.01, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
                 reason = 'Délai dépassé'
     except KeyboardInterrupt:
         reason = 'Interrompu par utilisateur'
     finally:
-        # Supprime aussi les descendants restés actifs dans le groupe.
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
+        stop.set()
+        if windows:
+            if process.poll() is None or reason:
+                try:
+                    subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+                except (OSError, subprocess.TimeoutExpired):
+                    pass
+            if process.poll() is None:
+                process.kill()
+        else:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
         process.wait()
-        selector.close()
-        process.stdout.close()
+        thread.join(timeout=1)
+        if not thread.is_alive():
+            process.stdout.close()
     return {'code': process.returncode, 'output': chunks.decode('utf-8', errors='replace'), 'reason': reason}
 
 
