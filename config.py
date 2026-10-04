@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 APP_NAME = "IA-LEX"
-VERSION = "2.2"
+VERSION = "2.3"
 MEMORY_PATH = Path(os.environ.get("IA_LEX_MEMORY_PATH", "~/.local/share/ia-lex/memory.json")).expanduser()
 MAX_MESSAGES = 200
 OLLAMA_URL = os.environ.get("IA_LEX_OLLAMA_URL", "http://127.0.0.1:11434")

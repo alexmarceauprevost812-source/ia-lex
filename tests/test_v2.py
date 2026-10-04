@@ -22,20 +22,20 @@ class V2Tests(unittest.TestCase):
         client = brain.OllamaBrain()
         proposal = {'answer': 'Liste', 'commands': [{'argv': ['ls', '-l'], 'explanation': 'Liste les fichiers'}]}
         response = Mock()
-        response.read.return_value = json.dumps({'message': {'content': json.dumps(proposal)}}).encode()
+        response.readline.side_effect = [json.dumps({'message': {'content': json.dumps(proposal)}, 'done': True}).encode()]
         client.opener = MagicMock()
         client.opener.open.return_value.__enter__.return_value = response
         self.assertEqual(client.reply('aide', [], ['ls']), proposal)
         request = client.opener.open.call_args.args[0]
         payload = json.loads(request.data)
-        self.assertFalse(payload['stream'])
+        self.assertTrue(payload['stream'])
         self.assertEqual(payload['format'], brain.SCHEMA)
         self.assertEqual(request.full_url, 'http://127.0.0.1:11434/api/chat')
         with self.assertRaises(ValueError):
             brain.validate_reply({'answer': 'x', 'commands': [{'argv': ['ls\nrm'], 'explanation': 'x'}]})
         with self.assertRaises(ValueError):
             brain.OllamaBrain('https://example.com')
-        response.read.return_value = b'broken'
+        response.readline.side_effect = [b'broken']
         with self.assertRaises(RuntimeError):
             client.reply('aide', [], [])
 
@@ -124,7 +124,7 @@ class V2Tests(unittest.TestCase):
             env = dict(os.environ, IA_LEX_MEMORY_PATH=str(Path(temp)/'history.json'))
             result = subprocess.run([str(Path(temp)/'.local/bin/bonjour'), 'ia-lex'], input='/help\n/tools python\n/quit\n', text=True, capture_output=True, env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('PERSONAL V2.2', result.stdout)
+            self.assertIn('PERSONAL V2.3', result.stdout)
             self.assertIn('/run', result.stdout)
             (Path(temp)/'.local/bin/bonjour').unlink()
             (Path(temp)/'.local/bin/bonjour').write_text('existing tool')

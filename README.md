@@ -1,4 +1,4 @@
-# IA-LEX Personal V2.2
+# IA-LEX Personal V2.3
 
 Assistant Python pour Kali/Ubuntu : conversation avec Ollama local, détection des
 outils installés, propositions de commandes, exécution après confirmation et
@@ -192,3 +192,12 @@ nouvelle demande ou un changement de dossier annulent les propositions de fichie
 Les propositions d'écriture ne sont pas restaurées par `/project load` : demande
 une nouvelle proposition après avoir repris le projet. `/script` exporte uniquement
 les commandes, pas les modifications de fichiers.
+
+## V2.3 : écriture fluide
+
+Les réponses apparaissent progressivement dès que le modèle Ollama produit du
+texte, sans délai artificiel entre les caractères. Les commandes et fichiers sont
+validés seulement après réception complète ; une interruption ne crée aucun plan.
+La vitesse réelle de génération dépend du modèle, du CPU/GPU et de la RAM. Pour
+un modèle plus léger, télécharge `ollama pull qwen2.5:3b`, puis lance
+`IA_LEX_MODEL=qwen2.5:3b bonjour ia-lex`.

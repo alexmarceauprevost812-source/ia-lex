@@ -65,8 +65,20 @@ def main():
         edits = []
         pending = []  # Une erreur réseau ne doit pas laisser un ancien plan exécutable.
         say("Ollama réfléchit…")
-        reply = brain.reply(text, memory.messages, inventory)
-        say(reply['answer'])
+        from tools import safe_text
+        streamed = []
+        def progress(fragment):
+            if not streamed:
+                print(style('IA-LEX > '), end='', flush=True)
+            streamed.append(fragment)
+            print(safe_text(fragment), end='', flush=True)
+        try:
+            reply = brain.reply(text, memory.messages, inventory, on_progress=progress)
+        finally:
+            if streamed:
+                print()
+        if ''.join(streamed) != reply['answer']:
+            say(reply['answer'])
         proposed_edits = [codework.prepare(os.getcwd(), item) for item in reply.get('files', [])]
         pending = reply['commands']
         edits = proposed_edits
