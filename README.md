@@ -1,4 +1,4 @@
-# IA-LEX Personal V2.1
+# IA-LEX Personal V2.2
 
 Assistant Python pour Kali/Ubuntu : conversation avec Ollama local, détection des
 outils installés, propositions de commandes, exécution après confirmation et
@@ -159,3 +159,36 @@ fichier de mémoire. Ils contiennent aussi les sorties dans l'historique. La rep
 remplace le contexte de conversation en cours ; sauvegarde ton projet avant d'en
 charger un autre. Les sauvegardes sont manuelles. Un changement de dossier avec
 `/cd` annule les commandes en attente.
+
+## V2.2 : aide au code dans le terminal
+
+Tu peux demander à Ollama de créer du Python, HTML/CSS, JavaScript ou du Bash,
+expliquer du code et proposer des corrections. La qualité dépend du modèle local.
+
+```text
+/cd /home/ton-compte/mes-projets
+/tree
+Crée un petit projet Python dans factures avec un README et un programme de calcul.
+/diff
+/apply
+```
+
+`/apply` affiche les différences puis exige `OUI` pour **un seul fichier**. Répète
+la commande pour chaque fichier. Les dossiers parents sont créés avec le fichier,
+après validation. Les tests et autres commandes proposées attendent ensuite `/run`
+et leur propre `OUI`. Aucun code généré n'est exécuté lors de l'enregistrement.
+
+Pour travailler sur un fichier existant : `/read factures/main.py`, puis décris
+la modification voulue. `/read` affiche le contenu et le fournit au modèle Ollama
+local dans le contexte. `/tree` montre jusqu'à 300 entrées du dossier actuel,
+sans parcourir `.git`, `.venv`, `node_modules` ou les liens symboliques.
+
+Les fichiers doivent être en UTF-8, de 64 Ko maximum, avec des chemins relatifs au
+dossier choisi par `/cd`. Les liens symboliques et les chemins qui sortent de ce
+dossier sont refusés. Les anciennes versions sont conservées dans un dossier
+`backups` voisin de la mémoire, avec permissions privées. IA-LEX refuse d'appliquer
+une proposition si le fichier a changé depuis sa préparation. `/cancel`, une
+nouvelle demande ou un changement de dossier annulent les propositions de fichiers.
+Les propositions d'écriture ne sont pas restaurées par `/project load` : demande
+une nouvelle proposition après avoir repris le projet. `/script` exporte uniquement
+les commandes, pas les modifications de fichiers.

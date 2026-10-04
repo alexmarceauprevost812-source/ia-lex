@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 FILES = ['main.py', 'brain.py', 'memory.py', 'tools.py', 'config.py',
-         'runner.py', 'projects.py', 'assistant_tools.py', 'ia-lex', 'bonjour', 'README.md', 'requirements.txt']
+         'runner.py', 'projects.py', 'codework.py', 'assistant_tools.py', 'ia-lex', 'bonjour', 'README.md', 'requirements.txt']
 
 
 def install(home=None):

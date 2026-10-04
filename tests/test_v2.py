@@ -124,7 +124,7 @@ class V2Tests(unittest.TestCase):
             env = dict(os.environ, IA_LEX_MEMORY_PATH=str(Path(temp)/'history.json'))
             result = subprocess.run([str(Path(temp)/'.local/bin/bonjour'), 'ia-lex'], input='/help\n/tools python\n/quit\n', text=True, capture_output=True, env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('PERSONAL V2.1', result.stdout)
+            self.assertIn('PERSONAL V2.2', result.stdout)
             self.assertIn('/run', result.stdout)
             (Path(temp)/'.local/bin/bonjour').unlink()
             (Path(temp)/'.local/bin/bonjour').write_text('existing tool')
